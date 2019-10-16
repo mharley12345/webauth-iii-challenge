@@ -1,4 +1,3 @@
 module.exports = {
-    jwtSecret: process.env.JWT_SECRET || "I'll Never Tell",
-  };
-  
+  jwtSecret: process.env.JTW_SECRET || "Keep it secret, keep it safe!"
+};

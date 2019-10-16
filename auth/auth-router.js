@@ -1,10 +1,11 @@
-const router = require('express').Router();
+const server = require('express')
+const express = require("express")
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const jwtSecret = process.env.secrets;
 const Users = require('../users/users-model.js');
 const secrets = require('../config/secrets.js');
-
+const router = express(server)
 // for endpoints beginning with /api/auth
 router.post('/register', (req, res) => {
   let user = req.body;
@@ -16,7 +17,7 @@ router.post('/register', (req, res) => {
       res.status(201).json(saved);
     })
     .catch(error => {
-      res.status(500).json({ message: 'cannot add the user', error });
+      res.status(500).json({ message: 'cannot add the user',error });
     });
 });
 
