@@ -1,17 +1,16 @@
 const express = require('express')
 
 const authRouter = require('./auth/auth-router')
-const usersRoute = require('./users/users-route')
-const mw = require('./server-middleware')
+const usersRoute = require('./users/user-route')
+
 
 const server = express()
 
 // Global Middleware
 server.use(express.json())
-server.use(mw.logger)
 
 // Route handling
-server.use('/api', authRouter)
+server.use('/api/auth', authRouter)
 server.use('/api/users', usersRoute)
 
 // Hello world test

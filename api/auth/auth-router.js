@@ -1,40 +1,80 @@
-  
-const express = require('express')
-const bcrypt = require('bcryptjs')
+const router = require('express').Router();
+const db = require('../users/user-model');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-const Users = require('../users/users-model')
-const mw = require('./auth-middleware')
 
-const router = express.Router()
+const secrets = require('../../config/secrets');
 
+// for endpoints beginning with /api/auth
 router.post('/register', (req, res) => {
-  const newUser = req.body
-  const hash = bcrypt.hashSync(newUser.password, 12)
+  let user = req.body;
+  console.log("THisIS",user)
+  const hash = bcrypt.hashSync(user.password,10); // 2 ^ n
+ user.password = hash
 
-  newUser.password = hash
-
-  Users.add(newUser)
-    .then(user => {
-      const token = mw.generateToken(user)
-
-      res.status(201).json({ token })
+  db.add(user)
+    .then(saved => {
+      console.log("Add Route",saved)
+      res.status(201).json(saved);
     })
-    .catch(err => res.status(500).json({ message: 'error registering' }))
-})
+    .catch(error => {
+      console.log(error)
+      res.status(500).json({ message: 'cannot add the user', error });
+    });
+});
 
 router.post('/login', (req, res) => {
-  const { username, password }= req.body
+  let { username, password } = req.body;
 
-  Users.findBy({ username })
+  db.findBy({ username })
     .first()
     .then(user => {
       if (user && bcrypt.compareSync(password, user.password)) {
-        const token = mw.generateToken(user)
+        // produce token
+        const token = generateToken(user);
 
-        res.json({ token })
-      } else res.status(401).json({ message: 'You shall not pass!' })
+        // add token to response
+        res.status(200).json({
+          message: `Welcome ${user.username}!`,
+          token,
+        });
+      } else {
+        res.status(401).json({ message: 'Invalid Credentials' });
+      }
     })
-    .catch(err => res.status(500).json({ message: 'error logging in' }))
+    .catch(error => {
+      res.status(500).json(error);
+    });
+});
+router.get("/logout",(req,res) =>{
+  if(req.session){
+    req.session.destroy(err =>{
+      res
+        .status(200)
+        .json({
+          message:
+          'Logout successfull'
+        })
+    })
+  }else {
+    res.status(200).json({message:'Not logged in'})
+  }
 })
 
-module.exports = router
+
+function generateToken(user) {
+  const payload = {
+    username: user.username,
+    subject: user.id,
+    role: user.role,
+  };
+  const options = {
+    expiresIn: '1h',
+  };
+
+  return jwt.sign(payload, secrets.jwtSecret, options);
+}
+
+
+module.exports = router;
