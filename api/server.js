@@ -6,7 +6,7 @@ const restricted = require("../auth/restricted-middleware");
 //const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const secrets = require("../config/secrets");
-const Users = require("../users/users-model");
+const Users = require("../users/users-router");
 const WithAuth = require('../auth/auth-router')
 const server = express();
 
@@ -26,23 +26,13 @@ const server = express();
 
 server.use(express.json());
 server.use(cors());
+server.use("/api/auth", WithAuth);
+server.use("/api/users",restricted, Users);
 server.get("/", (req, res) => {
   res.send("It's alive!");
 });
 
-server.post("/api/register", (req, res) => {
-  let { username, password } = req.body;
 
-  const hash = bcrypt.hashSync(password, 8); // it's 2 ^ 8s
-
-  Users.add({ username, password: hash })
-    .then(saved => {
-      res.status(201).json(saved);
-    })
-    .catch(error => {
-      res.status(500).json(error);
-    });
-});
 
 // server.post("/api/login", (req, res) => {
 //   let { username, password } = req.body;
@@ -63,14 +53,6 @@ server.post("/api/register", (req, res) => {
 //     });
 // });
 
-server.get("/api/users", restricted, (req, res) => {
-  Users.find()
-    .then(users => {
-      res.json(users);
-    })
-    .catch(err => res.send(err));
-});
-
 // server.get("/api/logout", (req, res) => {
 //   if (req.session) {
 //     req.session.destroy(error => {
@@ -86,17 +68,5 @@ server.get("/api/users", restricted, (req, res) => {
 //     res.status(200).json({ messsage: "already logged out" });
 //   }
 // });
-
-function generateToken(user) {
-  const payload = {
-    username: user.username
-  };
-  const secret = secrets.jwtSecret;
-
-  const options = {
-    expiresIn: "1d"
-  };
-  return jwt.sign(payload, secret, options);
-}
 
 module.exports = server;

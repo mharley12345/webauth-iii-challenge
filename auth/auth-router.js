@@ -44,6 +44,23 @@ router.post('/login', (req, res) => {
       res.status(500).json(error);
     });
 });
+router.get('/users',(req,res,next,jwt)=>{
+
+  Users.find(jwt)
+     if(jwt){
+       res.status(200).json({message: "Token Valid, Have a nice day!!!!!"}).next()
+     }else{
+       res.status(404).json({messge:"NO NO NO!!!!!!!! Invalid,missing,or incorect JWT. DO BETTER"})
+     };
+}
+)
+     .then(status =>{
+       res.status(401).json({message:"You are already logged in",...status},next())
+
+     })
+     .catch(err =>{
+       res.status(500).json({message:"Sorry we sucke Error:",err})
+     })
 router.get("/logout",(req,res) =>{
   if(req.session){
     req.session.destroy(err =>{
